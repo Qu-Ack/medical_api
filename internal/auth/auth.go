@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 
@@ -26,7 +25,7 @@ func Init() {
 	googleClientId := os.Getenv("GOOGLE_CLIENT_ID")
 	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 
-	store := sessions.NewCookieStore([]byte(""))
+	store := sessions.NewCookieStore([]byte("tryandbruteforcethisbitch"))
 
 	store.MaxAge(maxAge)
 	store.Options.Path = "/"
@@ -56,13 +55,10 @@ func OAuthCallback(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	res, err := json.Marshal(user)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
 
-	jsonString := string(res)
+	session, _ := gothic.Store.Get(c.Request, "gothic_session")
+	session.Values["user"] = user
+	session.Save(c.Request, c.Writer)
 
-	c.JSON(http.StatusAccepted, jsonString)
+	http.Redirect(c.Writer, c.Request, "http://localhost:3000/", http.StatusTemporaryRedirect)
 }
